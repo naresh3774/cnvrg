@@ -1,39 +1,47 @@
 ---
 - name: Get name of Prometheus release
-  shell: helm list --all-namespaces | grep prometheus | awk '{print $1}'
+  ansible.builtin.shell:
+    cmd: helm list --all-namespaces | grep prometheus | awk '{print $1}'
   register: release_name
   changed_when: false
 
 - name: Delete Prometheus release
-  command: helm delete --namespace default {{ release_name.stdout.strip() }} || true
+  ansible.builtin.command: helm delete --namespace default {{ release_name.stdout.strip() }} || true
+  changed_when: true
   ignore_errors: true
-  when: release_name.stdout.strip() != ""
+  when: release_name.stdout.strip()
 
 - name: Delete prometheus resources, PVC & pv
-  shell: |
+  ansible.builtin.shell: |
     kubectl get all -n default -o name | grep prometheus | xargs -n 1 kubectl delete -n default; \
     pvc_name=$(kubectl get pvc -n default -o name | grep prometheus); \
     pv_name=$(kubectl get pvc -n default $pvc_name -o jsonpath='{.spec.volumeName}'); \
     kubectl delete $pvc_name -n default --force; \
     kubectl delete $pv_name -n default --force
+  changed_when: true
   ignore_errors: yes
 
 - name: Delete nfs-omnia release
-  command: helm delete nfs-omnia --namespace default
+  ansible.builtin.command: helm delete nfs-omnia --namespace default
+  changed_when: true
   ignore_errors: true
 
 - name: Delete Spark operator release
-  command: helm delete my-release --namespace spark-operator
+  ansible.builtin.command: helm delete my-release --namespace spark-operator
+  changed_when: true
   ignore_errors: true
 
 - name: Delete spark-operator namespace
-  command: kubectl delete namespace spark-operator --force
+  ansible.builtin.command: kubectl delete namespace spark-operator --force
+  changed_when: true
   ignore_errors: true
 
 - name: Delete mpi-operator resources
-  command: kubectl delete all --all --force -n mpi-operator
+  ansible.builtin.command: kubectl delete all --all --force -n mpi-operator
+  changed_when: true
   register: delete_resources
 
 - name: Delete mpi-operator namespace
-  command: kubectl delete namespace mpi-operator --force
+  ansible.builtin.command: kubectl delete namespace mpi-operator --force
+  changed_when: true
   ignore_errors: true

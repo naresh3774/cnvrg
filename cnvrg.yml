@@ -25,7 +25,8 @@
       prompt: "Do you want to proceed with your input (yes/no)?"
       private: no
   pre_tasks:
-    - fail:
+    - name: "User operation check" 
+      fail:
         msg: >
           {%- if not confirmation|regex_search('(?i)^yes$|^no$') -%}
               Invalid input provided, input must be yes or no

@@ -1,11 +1,14 @@
 ---
 - name: Add cnvrgv3 Helm repository
-  command: helm repo add cnvrgv3 https://charts.v3.cnvrg.io
+  ansible.builtin.command: helm repo add cnvrgv3 https://charts.v3.cnvrg.io
+  changed_when: true
 
 - name: Update Helm repositories
-  command: helm repo update
+  ansible.builtin.command: helm repo update
+  changed_when: true
 
 - name: Install cnvrg Helm chart
-  command: helm install cnvrg cnvrgv3/cnvrg --create-namespace --wait -n cnvrg -f - --set clusterDomain={{ clusterDomain }},path={{ storage_path }},server={{ server_ip }}
+  ansible.builtin.command: helm install cnvrg cnvrgv3/cnvrg --create-namespace --wait -n cnvrg -f - --set clusterDomain={{ clusterDomain }},path={{ storage_path }},server={{ server_ip }}
+  changed_when: true
   args: 
     stdin: "{{ lookup('template', 'template/cnvrg-values.yml.j2') }}"
