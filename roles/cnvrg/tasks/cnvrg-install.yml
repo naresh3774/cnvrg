@@ -1,0 +1,11 @@
+---
+- name: Add cnvrgv3 Helm repository
+  command: helm repo add cnvrgv3 https://charts.v3.cnvrg.io
+
+- name: Update Helm repositories
+  command: helm repo update
+
+- name: Install cnvrg Helm chart
+  command: helm install cnvrg cnvrgv3/cnvrg --create-namespace --wait -n cnvrg -f - --set clusterDomain={{ clusterDomain }},path={{ storage_path }},server={{ server_ip }}
+  args: 
+    stdin: "{{ lookup('template', 'template/cnvrg-values.yml.j2') }}"

@@ -1,0 +1,39 @@
+---
+- name: "cnvrg installation"
+  hosts: manager
+  become: true
+  gather_facts: true
+
+  vars_prompt:
+    - name: "clusterDomain"
+      prompt: "Enter the cluster domain name"
+      private: no
+    - name: "nfs_server_ip"
+      prompt: "Enter the nfs server IP address"
+      private: no
+    - name: "storage_path"
+      prompt: "Enter nfs storage path"
+      private: no
+    - name: "server_ip"
+      prompt: "Enter the server IP address"
+      private: no
+    - name: "metallb_ip"
+      prompt: "Enter the MetalLB available IP address"
+      private: no
+    
+    - name: "confirmation"
+      prompt: "Do you want to proceed with your input (yes/no)?"
+      private: no
+  pre_tasks:
+    - fail:
+        msg: >
+          {%- if not confirmation|regex_search('(?i)^yes$|^no$') -%}
+              Invalid input provided, input must be yes or no
+          {%-else-%}
+              User choose to abort the playbook
+          {%-endif-%}
+      when: not confirmation |regex_search('(?i)^yes$')
+      
+
+  roles:
+    - { role: cnvrg }

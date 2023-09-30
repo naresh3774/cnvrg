@@ -1,0 +1,12 @@
+clusterDomain: {{ clusterDomain }}
+registry:
+  password: 363d09d8-49c6-466a-b5e6-1bbfd74b94db
+  user: cnvrghelm
+storage:
+  nfs:
+    defaultSc: true
+    enabled: true
+    path: {{ storage_path }}
+    server: {{ nfs_server_ip }}
+controlPlane:
+  image: cnvrg/app:v4.7.43

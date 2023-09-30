@@ -1,0 +1,9 @@
+---
+- name: "Uninstall resources"
+  include_tasks: uninstall-resources.yml
+
+- name: "Server Setup"
+  include_tasks: setup_cnvrg.yml
+
+- name: "cnvrg installation"
+  include_tasks: cnvrg-install.yml
