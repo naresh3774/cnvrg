@@ -1,6 +1,6 @@
 ---
 - name: "cnvrg installation"
-  hosts: manager
+  hosts: manager, compute
   become: true
   gather_facts: true
 

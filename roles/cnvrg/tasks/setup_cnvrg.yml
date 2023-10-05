@@ -1,42 +1,4 @@
 ---
-- name: Create storage path directory
-  ansible.builtin.file:
-    path: "{{ storage_path }}"
-    state: directory
-    mode: '0777'
-
-- name: Add storage_path to /etc/exports
-  ansible.builtin.lineinfile:
-    path: "/etc/exports"
-    line: "{{ storage_path }} *(rw,sync,no_subtree_check,no_root_squash)"
-    state: present
-
-- name: Restart NFS server
-  ansible.builtin.service:
-    name: nfs-server
-    state: restarted
-  ignore_errors: True
-
-- name: Install dnsmasq
-  ansible.builtin.dnf:
-    name: dnsmasq
-    state: present
-    update_cache: yes
-
-- name: Set address to the MetalLB IP address assigned to cnvrg-ingressgateway
-  ansible.builtin.lineinfile:
-    path: "/etc/dnsmasq.conf"
-    line: "address=/{{ clusterDomain }}/{{ metallb_ip }}"
-    insertafter: "#address=/double-click.net/127.0.0.1"
-    state: present
-    regexp: "^address=/{{ clusterDomain }}/.*$"
-
-- name: Restart dnsmasq service
-  ansible.builtin.systemd:
-    name: dnsmasq
-    state: restarted
-    enabled: true
-
 - name: Configure /etc/resolv.conf
   ansible.builtin.lineinfile:
     path: "/etc/resolv.conf"
@@ -45,24 +7,63 @@
     state: present
 
 - block:
-    - name: Download CoreDNS ConfigMap
-      ansible.builtin.shell: kubectl get configmap coredns -n kube-system -o yaml > coredns.yaml
-      changed_when: true
+  - name: Create storage path directory
+    ansible.builtin.file:
+      path: "{{ storage_path }}"
+      state: directory
+      mode: '0777'
 
-    - name: Modify CoreDNS ConfigMap
-      ansible.builtin.lineinfile:
-        path: coredns.yaml
-        line: '           policy sequential'
-        insertafter: '^(\s*max_concurrent 1000\s*)$'
-  
-    - name: Apply modified CoreDNS ConfigMap
-      kubernetes.core.k8s:
-        state: present
-        src: coredns.yaml
-        namespace: kube-system
-        merge_type: strategic-merge
+  - name: Add storage_path to /etc/exports
+    ansible.builtin.lineinfile:
+      path: "/etc/exports"
+      line: "{{ storage_path }} *(rw,sync,no_subtree_check,no_root_squash)"
+      state: present
 
-    - name: Clean up temporary files
-      ansible.builtin.file:
-        path: coredns.yaml
-        state: absent
+  - name: Restart NFS server
+    ansible.builtin.service:
+      name: nfs-server
+      state: restarted
+    ignore_errors: True
+
+  - name: Install dnsmasq
+    ansible.builtin.dnf:
+      name: dnsmasq
+      state: present
+      update_cache: yes
+
+  - name: Set address to the MetalLB IP address assigned to cnvrg-ingressgateway
+    ansible.builtin.lineinfile:
+      path: "/etc/dnsmasq.conf"
+      line: "address=/{{ clusterDomain }}/{{ metallb_ip }}"
+      insertafter: "#address=/double-click.net/127.0.0.1"
+      state: present
+      regexp: "^address=/{{ clusterDomain }}/.*$"
+
+  - name: Restart dnsmasq service
+    ansible.builtin.systemd:
+      name: dnsmasq
+      state: restarted
+      enabled: true
+
+  - name: Download CoreDNS ConfigMap
+    ansible.builtin.shell: kubectl get configmap coredns -n kube-system -o yaml > coredns.yaml
+    changed_when: true
+
+  - name: Modify CoreDNS ConfigMap
+    ansible.builtin.lineinfile:
+      path: coredns.yaml
+      line: '           policy sequential'
+      insertafter: '^(\s*max_concurrent 1000\s*)$'
+
+  - name: Apply modified CoreDNS ConfigMap
+    kubernetes.core.k8s:
+      state: present
+      src: coredns.yaml
+      namespace: kube-system
+      merge_type: strategic-merge
+
+  - name: Clean up temporary files
+    ansible.builtin.file:
+      path: coredns.yaml
+      state: absent
+  when: inventory_hostname in groups["manager"]
